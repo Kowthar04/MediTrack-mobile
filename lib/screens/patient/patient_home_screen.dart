@@ -6,6 +6,7 @@ import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../../services/notification_service.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -26,11 +27,38 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   void loadData() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    futureData = api.getPatientHome(auth.token!);
+
+    futureData = api.getPatientHome(auth.token!).then((data) async {
+      final schedule = data['schedule'] as List<dynamic>? ?? [];
+
+      await NotificationService.cancelAllNotifications();
+
+      for (int i = 0; i < schedule.length; i++) {
+        final item = schedule[i];
+        final time = item['time'];
+
+        if (time == null || time == 'As needed' || time == '--:--') {
+          continue;
+        }
+
+        await NotificationService.scheduleMedicationReminder(
+          id: i + 1,
+          medicationName: item['name'] ?? 'Medication',
+          dose: item['dose'] ?? '',
+          time: time,
+        );
+      }
+
+      return data;
+    });
   }
 
   Future<void> refresh() async {
-    setState(loadData);
+    setState(() {
+      loadData();
+    });
+
+    await futureData;
   }
 
   Future<void> logDose(String time) async {

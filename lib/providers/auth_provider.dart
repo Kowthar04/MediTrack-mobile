@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/auth_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -35,6 +36,12 @@ class AuthProvider extends ChangeNotifier {
       role = result['role'];
       fullName = result['full_name'];
 
+      await AuthStorage.saveSession(
+        token: token!,
+        role: role!,
+        fullName: fullName!,
+      );
+
       isLoading = false;
       notifyListeners();
       return true;
@@ -46,11 +53,16 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await AuthStorage.clearSession();
+
     token = null;
     role = null;
     fullName = null;
     errorMessage = null;
+    selectedPatientId = null;
+    selectedPatientName = null;
+
     notifyListeners();
   }
 }

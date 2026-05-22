@@ -44,7 +44,11 @@ class _CaregiverNotesScreenState extends State<CaregiverNotesScreen> {
   }
 
   Future<void> refresh() async {
-    setState(loadNotes);
+    setState(() {
+      loadNotes();
+    });
+
+    await futureData;
   }
 
   Future<void> saveNote() async {
@@ -67,9 +71,13 @@ class _CaregiverNotesScreenState extends State<CaregiverNotesScreen> {
       );
 
       noteController.clear();
-      selectedTag = null;
 
-      await refresh();
+      setState(() {
+        selectedTag = null;
+        loadNotes();
+      });
+
+      await futureData;
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -232,7 +240,7 @@ class _CaregiverNotesScreenState extends State<CaregiverNotesScreen> {
                               ],
                             ),
                           );
-                        }).toList(),
+                        })
                     ],
                   ),
                 ),
